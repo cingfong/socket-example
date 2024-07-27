@@ -13,6 +13,22 @@ const wss = new WebSocket.Server({ server });
 
 const RoomList = {}
 const gameList = {}
+const calculateWin = (boxState, room) => {
+  const winList = [
+    [0, 1, 2],
+    [3, 4, 5],
+    [6, 7, 8],
+    [0, 3, 6],
+    [1, 4, 7],
+    [2, 5, 8],
+    [0, 4, 8],
+    [2, 4, 6],
+  ];
+  for (let i = 0; i < winList.length; i++) {
+    const site = winList[i];
+    if (site.every(index => room[index] === boxState)) return true
+  }
+}
 wss.on('connection', (ws) => {
   // 监听 WebSocket 客户端消息
   ws.on('message', (message) => {
@@ -48,6 +64,14 @@ wss.on('connection', (ws) => {
         RoomList[roomNumber].forEach(client => {
           client.send(JSON.stringify({ event: 'action', value: gameList[roomNumber], ctl: client !== ws }));
         });
+        setTimeout(()=>{
+          if (calculateWin(classBox, gameList[roomNumber])) {
+            RoomList[roomNumber].forEach(client => {
+              client.send(JSON.stringify({ event: 'gameOver', value: classBox === 'crosses' ? 'crosses win' : 'noughts win' }));
+            });
+            return
+          }
+        },100)
         break;
       default:
         break;
@@ -60,6 +84,9 @@ wss.on('connection', (ws) => {
     roomList.some(roomNumber => {
       if (RoomList[roomNumber]?.has(ws)) {
         RoomList[roomNumber].delete(ws)
+        if (gameList[roomNumber]) {
+          gameList[roomNumber] = null
+        }
         return true
       }
     })

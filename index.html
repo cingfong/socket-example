@@ -6,6 +6,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>井字遊戲</title>
   <style>
+    .hidden {
+      opacity: 0;
+      z-index: -1;
+    }
+
     .screen {
       display: flex;
       align-items: center;
@@ -70,11 +75,23 @@
         transform: translate(-50%, -50%) rotate(-45deg);
       }
     }
+
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      display: flex;
+      width: 100vw;
+      height: 100vh;
+      justify-content: center;
+      align-items: center;
+      background-color: rgba(0, 0, 0, 0.5);
+    }
   </style>
 </head>
 
 <body>
-  <h1>井字遊戲</h1>
+  <h1>井字遊戲<span class="my-turn hidden">-換你</span></h1>
   <div>房間編號:<span class="room-number"></span></div>
 
   <div class="screen">
@@ -108,10 +125,14 @@
   <script>
     // 創建隨機四位數
     const createRoom = () => {
+      const modal = document.querySelector('.modal')
+      modal.classList.add('hidden')
       const roomNumber = Math.floor(1000 + Math.random() * 9000);
       ws.send(JSON.stringify({ event: 'createRoom', value: roomNumber }));
     }
     const joinRoom = () => {
+      const modal = document.querySelector('.modal')
+      modal.classList.add('hidden')
       const input = document.getElementById('room-number');
       ws.send(JSON.stringify({ event: 'joinRoom', value: input.value }));
       input.value = '';
@@ -133,7 +154,6 @@
     const playedEvent = (value) => {
       // document.getElementById(`box-${index}`).classList.add(`${classBox}-box`)
       gameState = value
-
       const boxList = document.getElementsByClassName('box')
       for (let i = 0; i < boxList.length; i++) {
         const boxState = gameState[i]
@@ -142,7 +162,7 @@
         boxList[i].classList.add(`${boxState}-box`)
       }
     }
-    let myTurn = true;
+    let myTurn = false;
     let roomNumber = null
     let classBox = null
     let gameState = null
@@ -159,10 +179,15 @@
           break;
         case 'start':
           classBox = value
+          if (value === 'noughts') { myTurn = true }
           break;
         case 'action':
           myTurn = ctl
           playedEvent(value)
+          break;
+        case 'gameOver':
+          myTurn = false
+          alert(value)
           break;
         case 'error':
           alert(value)
@@ -170,6 +195,13 @@
         default:
           break;
       }
+      ((value) => {
+        if (!value) {
+          document.querySelector('.my-turn').classList.add('hidden')
+        } else {
+          document.querySelector('.my-turn').classList.remove('hidden')
+        }
+      })(myTurn)
     };
 
     // 受點擊的盒子
