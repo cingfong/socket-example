@@ -75,90 +75,116 @@
 
 <body>
   <h1>井字遊戲</h1>
-  <div>編號:<span class="room-number"></span></div>
+  <div>房間編號:<span class="room-number"></span></div>
 
   <div class="screen">
     <div class="col-wrap">
-      <div id="box_1" class="box"></div>
-      <div id="box_2" class="box"></div>
-      <div id="box_3" class="box"></div>
+      <div id="box-0" class="box"></div>
+      <div id="box-1" class="box"></div>
+      <div id="box-2" class="box"></div>
     </div>
     <div class="col-wrap">
-      <div id="box_4" class="box"></div>
-      <div id="box_5" class="box"></div>
-      <div id="box_6" class="box"></div>
+      <div id="box-3" class="box"></div>
+      <div id="box-4" class="box"></div>
+      <div id="box-5" class="box"></div>
     </div>
     <div class="col-wrap">
-      <div id="box_7" class="box"></div>
-      <div id="box_8" class="box"></div>
-      <div id="box_9" class="box"></div>
+      <div id="box-6" class="box"></div>
+      <div id="box-7" class="box"></div>
+      <div id="box-8" class="box"></div>
     </div>
   </div>
   <div class="modal">
     <div>
       <p>創建遊戲</p>
-      <button onclick="sendMessage()">創建</button>
+      <button onclick="createRoom()">創建</button>
     </div>
     <div>
       <p>加入遊戲</p>
-      <input type="text" id="message" placeholder="請輸入編號">
-      <button onclick="sendMessage()">Send</button>
+      <input type="text" id="room-number" placeholder="請輸入編號">
+      <button onclick="joinRoom()">Send</button>
     </div>
   </div>
-  <!-- <div id="chat"></div>
-  <input type="text" id="message" placeholder="Type your message here..."> -->
-  <!-- <button onclick="sendMessage()">Send</button> -->
-
   <script>
+    // 創建隨機四位數
+    const createRoom = () => {
+      const roomNumber = Math.floor(1000 + Math.random() * 9000);
+      ws.send(JSON.stringify({ event: 'createRoom', value: roomNumber }));
+    }
+    const joinRoom = () => {
+      const input = document.getElementById('room-number');
+      ws.send(JSON.stringify({ event: 'joinRoom', value: input.value }));
+      input.value = '';
+    }
     // 閉包控制變數
     // const { myTurn, setMyTurn } = (() => {
     //   let myTurn = false
     //   return myTurn
     // })()
     // let myTurn = true;
-    ((global) => {
-      const ws = new WebSocket('ws://localhost:8080');
+    // ((global) => {
+    const ws = new WebSocket('ws://localhost:8080');
 
-      // 文章中可補充測試用的 WebSocket 功能
-      ws.onopen = () => {
-        console.log('Connected to WebSocket server');
-      };
+    // 文章中可補充測試用的 WebSocket 功能
+    ws.onopen = () => {
+      console.log('Connected to WebSocket server');
+    };
 
-      const playedEvent = (index) => {
-        document.getElementById(`box_${index}`).classList.add('crosses-box')
+    const playedEvent = (value) => {
+      // document.getElementById(`box-${index}`).classList.add(`${classBox}-box`)
+      gameState = value
+
+      const boxList = document.getElementsByClassName('box')
+      for (let i = 0; i < boxList.length; i++) {
+        const boxState = gameState[i]
+        boxList[i].classList.remove('crosses-box')
+        boxList[i].classList.remove('noughts-box')
+        boxList[i].classList.add(`${boxState}-box`)
       }
-      ws.onmessage = (message) => {
-        console.log(message.data);
-        const { event, value } = JSON.parse(message.data);
-        switch (event) {
-          case 'action':
-            playedEvent(value)
-            break;
-          default:
-            break;
-        }
-      };
-
-      const sendMessage = (index) => {
-        ws.send(index);
+    }
+    let myTurn = true;
+    let roomNumber = null
+    let classBox = null
+    let gameState = null
+    ws.onmessage = (message) => {
+      const { event, value, ctl } = JSON.parse(message.data);
+      switch (event) {
+        case 'createdRoom':
+          document.querySelector('.room-number').textContent = value
+          roomNumber = value
+          break;
+        case 'joinedRoom':
+          document.querySelector('.room-number').textContent = value
+          roomNumber = value
+          break;
+        case 'start':
+          classBox = value
+          break;
+        case 'action':
+          myTurn = ctl
+          playedEvent(value)
+          break;
+        case 'error':
+          alert(value)
+          break;
+        default:
+          break;
       }
+    };
 
-      const querySelectorAll = document.querySelectorAll('.box');
-      const boxClick = (element) => {
-        // if (myTurn) {
-        const [, index] = element.target.id.split('_');
-        sendMessage(index);
-        // }
+    // 受點擊的盒子
+    const querySelectorAll = document.querySelectorAll('.box');
+    const boxClick = (element) => {
+      if (myTurn) {
+        const [, index] = element.target.id.split('-');
+        ws.send(JSON.stringify({ event: 'action', value: index, classBox, roomNumber }));
       }
-      querySelectorAll.forEach(element => {
-        element.addEventListener('click', boxClick);
-      });
-
-      ws.onclose = () => {
-        console.log('Disconnected from WebSocket server');
-      };
-      return sendMessage
-    })(this)
+    }
+    querySelectorAll.forEach(element => {
+      element.addEventListener('click', boxClick);
+    });
+    // return sendMessage
+    // })(this)
   </script>
 </body>
 
