@@ -48,6 +48,7 @@
     }
 
     .crosses-box {
+
       &::before,
       &::after {
         content: '';
@@ -78,19 +79,19 @@
 
   <div class="screen">
     <div class="col-wrap">
-      <div id="1" class="box"></div>
-      <div id="2" class="box"></div>
-      <div id="3" class="box"></div>
+      <div id="box_1" class="box"></div>
+      <div id="box_2" class="box"></div>
+      <div id="box_3" class="box"></div>
     </div>
     <div class="col-wrap">
-      <div id="4" class="box"></div>
-      <div id="5" class="box"></div>
-      <div id="6" class="box"></div>
+      <div id="box_4" class="box"></div>
+      <div id="box_5" class="box"></div>
+      <div id="box_6" class="box"></div>
     </div>
     <div class="col-wrap">
-      <div id="7" class="box"></div>
-      <div id="8" class="box"></div>
-      <div id="9" class="box"></div>
+      <div id="box_7" class="box"></div>
+      <div id="box_8" class="box"></div>
+      <div id="box_9" class="box"></div>
     </div>
   </div>
   <div class="modal">
@@ -115,46 +116,49 @@
     //   return myTurn
     // })()
     // let myTurn = true;
+    ((global) => {
+      const ws = new WebSocket('ws://localhost:8080');
 
-    const boxClick = (element) => {
-      if (myTurn) {
-        const id = element.target.id;
-        console.log(id);
+      // 文章中可補充測試用的 WebSocket 功能
+      ws.onopen = () => {
+        console.log('Connected to WebSocket server');
+      };
+
+      const playedEvent = (index) => {
+        document.getElementById(`box_${index}`).classList.add('crosses-box')
       }
-    }
+      ws.onmessage = (message) => {
+        console.log(message.data);
+        const { event, value } = JSON.parse(message.data);
+        switch (event) {
+          case 'action':
+            playedEvent(value)
+            break;
+          default:
+            break;
+        }
+      };
 
-    (() => {
+      const sendMessage = (index) => {
+        ws.send(index);
+      }
+
       const querySelectorAll = document.querySelectorAll('.box');
+      const boxClick = (element) => {
+        // if (myTurn) {
+        const [, index] = element.target.id.split('_');
+        sendMessage(index);
+        // }
+      }
       querySelectorAll.forEach(element => {
         element.addEventListener('click', boxClick);
       });
-      // console.log(querySelectorAll);
-    })()
 
-    const ws = new WebSocket('ws://localhost:8080');
-
-    // 文章中可補充測試用的 WebSocket 功能
-    ws.onopen = () => {
-      console.log('Connected to WebSocket server');
-    };
-
-    ws.onmessage = (event) => {
-      const chat = document.getElementById('chat');
-      const message = document.createElement('div');
-      message.textContent = event.data;
-      chat.appendChild(message);
-      chat.scrollTop = chat.scrollHeight; // Scroll to the bottom
-    };
-
-    ws.onclose = () => {
-      console.log('Disconnected from WebSocket server');
-    };
-
-    function sendMessage() {
-      const input = document.getElementById('message');
-      ws.send(input.value);
-      input.value = '';
-    }
+      ws.onclose = () => {
+        console.log('Disconnected from WebSocket server');
+      };
+      return sendMessage
+    })(this)
   </script>
 </body>
 
