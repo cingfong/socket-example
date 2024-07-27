@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>井字遊戲</title>
+  <style>
+    .screen {
+      display: flex;
+      align-items: center;
+      flex-direction: column;
+    }
+
+    .box {
+      position: relative;
+      border-right: solid 1px black;
+      height: 50px;
+      width: 50px;
+
+      &:last-child {
+        border-right: none;
+      }
+    }
+
+    .col-wrap {
+      display: flex;
+      width: 150px;
+      border-bottom: solid 1px black;
+
+      &:last-child {
+        border-bottom: none;
+      }
+    }
+
+    .noughts-box {
+      &::before {
+        content: '';
+        display: block;
+        width: 40px;
+        height: 40px;
+        position: absolute;
+        top: 2.5px;
+        left: 2.5px;
+        border: solid 3px red;
+        border-radius: 50%;
+      }
+    }
+
+    .crosses-box {
+      &::before,
+      &::after {
+        content: '';
+        display: block;
+        width: 40px;
+        height: 4px;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        border-radius: 3px;
+        background-color: blue;
+      }
+
+      &::before {
+        transform: translate(-50%, -50%) rotate(45deg);
+      }
+
+      &::after {
+        transform: translate(-50%, -50%) rotate(-45deg);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <h1>井字遊戲</h1>
+  <div>編號:<span class="room-number"></span></div>
+
+  <div class="screen">
+    <div class="col-wrap">
+      <div id="1" class="box"></div>
+      <div id="2" class="box"></div>
+      <div id="3" class="box"></div>
+    </div>
+    <div class="col-wrap">
+      <div id="4" class="box"></div>
+      <div id="5" class="box"></div>
+      <div id="6" class="box"></div>
+    </div>
+    <div class="col-wrap">
+      <div id="7" class="box"></div>
+      <div id="8" class="box"></div>
+      <div id="9" class="box"></div>
+    </div>
+  </div>
+  <div class="modal">
+    <div>
+      <p>創建遊戲</p>
+      <button onclick="sendMessage()">創建</button>
+    </div>
+    <div>
+      <p>加入遊戲</p>
+      <input type="text" id="message" placeholder="請輸入編號">
+      <button onclick="sendMessage()">Send</button>
+    </div>
+  </div>
+  <!-- <div id="chat"></div>
+  <input type="text" id="message" placeholder="Type your message here..."> -->
+  <!-- <button onclick="sendMessage()">Send</button> -->
+
+  <script>
+    // 閉包控制變數
+    // const { myTurn, setMyTurn } = (() => {
+    //   let myTurn = false
+    //   return myTurn
+    // })()
+    // let myTurn = true;
+
+    const boxClick = (element) => {
+      if (myTurn) {
+        const id = element.target.id;
+        console.log(id);
+      }
+    }
+
+    (() => {
+      const querySelectorAll = document.querySelectorAll('.box');
+      querySelectorAll.forEach(element => {
+        element.addEventListener('click', boxClick);
+      });
+      // console.log(querySelectorAll);
+    })()
+
+    const ws = new WebSocket('ws://localhost:8080');
+
+    // 文章中可補充測試用的 WebSocket 功能
+    ws.onopen = () => {
+      console.log('Connected to WebSocket server');
+    };
+
+    ws.onmessage = (event) => {
+      const chat = document.getElementById('chat');
+      const message = document.createElement('div');
+      message.textContent = event.data;
+      chat.appendChild(message);
+      chat.scrollTop = chat.scrollHeight; // Scroll to the bottom
+    };
+
+    ws.onclose = () => {
+      console.log('Disconnected from WebSocket server');
+    };
+
+    function sendMessage() {
+      const input = document.getElementById('message');
+      ws.send(input.value);
+      input.value = '';
+    }
+  </script>
+</body>
+
+</html>
