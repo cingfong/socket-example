@@ -144,7 +144,7 @@
     // })()
     // let myTurn = true;
     // ((global) => {
-    const ws = new WebSocket('ws://localhost:8080');
+    const ws = new WebSocket(`ws://${window.location.host}`);
 
     // 文章中可補充測試用的 WebSocket 功能
     ws.onopen = () => {

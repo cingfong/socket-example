@@ -1,11 +1,20 @@
 // nodemon 熱加載使用
-const http = require('http');
+const express = require('express');
+const path = require('path');
 const WebSocket = require('ws');
 
-// 创建一个 HTTP 服务器
-const server = http.createServer((req, res) => {
-  res.writeHead(404);
-  res.end();
+const app = express();
+const port = 8080;
+
+// 提供靜態文件
+app.use(express.static(path.join(__dirname, 'public')));
+
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+const server = app.listen(port, () => {
+  console.log(`Listening on http://localhost:${port}`);
 });
 
 // 创建一个 WebSocket 服务器并附加到 HTTP 服务器
@@ -91,9 +100,4 @@ wss.on('connection', (ws) => {
       }
     })
   });
-});
-
-// 启动服务器
-server.listen(8080, () => {
-  console.log('Server is listening on port 8080');
 });
