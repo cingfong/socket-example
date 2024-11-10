@@ -174,21 +174,21 @@
   </div>
   <script>
     let ws = new WebSocket('ws://localhost:8080');
+    // 創建隨機四位數
+    const createRoom = () => {
+      const modal = document.querySelector('.modal')
+      modal.classList.add('hidden')
+      const roomNumber = Math.floor(1000 + Math.random() * 9000);
+      ws.send(JSON.stringify({ event: 'createRoom', value: roomNumber }));
+    }
+    const joinRoom = () => {
+      const modal = document.querySelector('.modal')
+      modal.classList.add('hidden')
+      const input = document.getElementById('room-number');
+      ws.send(JSON.stringify({ event: 'joinRoom', value: input.value }));
+      input.value = '';
+    }
     const connectSocket=()=>{
-      // 創建隨機四位數
-      const createRoom = () => {
-        const modal = document.querySelector('.modal')
-        modal.classList.add('hidden')
-        const roomNumber = Math.floor(1000 + Math.random() * 9000);
-        ws.send(JSON.stringify({ event: 'createRoom', value: roomNumber }));
-      }
-      const joinRoom = () => {
-        const modal = document.querySelector('.modal')
-        modal.classList.add('hidden')
-        const input = document.getElementById('room-number');
-        ws.send(JSON.stringify({ event: 'joinRoom', value: input.value }));
-        input.value = '';
-      }
 
       // 文章中可補充測試用的 WebSocket 功能
       ws.onopen = () => {
@@ -263,7 +263,7 @@
     connectSocket()
     
 // 創建 Web Worker 實例
-const connectionWorker = new Worker('../connectionStatusChecker.js');
+const connectionWorker = new Worker('./connectionStatusChecker.js');
 
 // 當接收到來自 Worker 的消息時執行
 connectionWorker.onmessage = function(event) {
