@@ -250,6 +250,7 @@
 
       // 受點擊的盒子
       const querySelectorAll = document.querySelectorAll('.box');
+
       const boxClick = (element) => {
         if (myTurn) {
           const [, index] = element.target.id.split('-');
@@ -276,6 +277,8 @@ connectionWorker.onmessage = function(event) {
 // 模擬的連線狀態檢查函數
 function checkConnectionStatus() {
     // 連線檢查邏輯，比如檢查 WebSocket 連接狀態
+    ws.send(JSON.stringify({event:'ping'}))
+    console.log(ws.readyState ,WebSocket.OPEN)
     if(ws.readyState === WebSocket.OPEN) {
         console.log('連線正常');
     }else{
